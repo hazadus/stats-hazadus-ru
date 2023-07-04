@@ -1,0 +1,35 @@
+---
+version: '3'
+services:
+  umami:
+    container_name: "stats-umami"
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    environment:
+      DATABASE_URL: postgresql://umami:umami@db:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: jKGYgig&glFuigjYGg99uhGFt6ihFGugybbkUGFfughjh-&^d
+    depends_on:
+      - db
+    restart: always
+  db:
+    container_name: "stats-db"
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: umami
+    volumes:
+      - ./sql/schema.postgresql.sql:/docker-entrypoint-initdb.d/schema.postgresql.sql:ro
+      - ./db-data:/var/lib/postgresql/data
+    restart: always
+  nginx:
+    container_name: "stats-nginx"
+    image: nginx:1.23-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/logs:/var/log/nginx
+      - ./nginx/default.prod.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - /etc/letsencrypt/archive/stats.hazadus.ru/:/certs
